@@ -38,7 +38,7 @@ def search_image(base64_image):
     return result_text
 
 with gr.Blocks(css=CSS, head=HEAD_HTML, title="DeepSeek? FaceSeek!") as iface:
-    html = gr.HTML(MAIN_HTML)
+    html = gr.HTML(MAIN_HTML, max_height=720)
     js_txt = gr.Textbox(label="Base64-Image", elem_id="base64_image", visible=False)
     out_txt = gr.Textbox(label="Result", visible=False)
 
