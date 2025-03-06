@@ -8,6 +8,7 @@ sdk_version: 5.20.0
 app_file: app.py
 pinned: false
 header: mini
+short_description: Search Face Online
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
