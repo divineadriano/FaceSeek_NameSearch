@@ -3,6 +3,7 @@ import gradio as gr
 import tempfile
 from gradio_client import Client, handle_file
 import base64
+import json
 
 BACKEND = os.getenv("BACKEND")
 JS2 = os.getenv("JS2")
