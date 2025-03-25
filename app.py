@@ -23,30 +23,81 @@ def base64_to_image(base64_str):
         base64_str = base64_str.split(";base64,")[1].strip()
     return base64.b64decode(base64_str + '=' * (-len(base64_str) % 4))
 
-def search_image(base64_image, token_txt):
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+user_attempts = {}
+def clear_old_entries():
+    today = datetime.now().date()
+    # Create a list of keys to remove
+    keys_to_remove = [key for key, value in user_attempts.items() if value != today]
+    # Remove old entries
+    for key in keys_to_remove:
+        del user_attempts[key]
+
+def if_limited(request):
+    clear_old_entries()
+    user_ip = None
+    if request.headers.get("x-forwarded-for"):
+        user_ip = request.headers["x-forwarded-for"].split(",")[0]  # First IP in the list
+
+    cookie_value = request.headers.get("cookie", "")
+    if "user_id=" in cookie_value:
+        user_id = cookie_value.split("user_id=")[1].split(";")[0]
+    else:
+        user_id = None
+    print("##### Coming", user_id, user_ip)
+    # Get today's date
+    today = datetime.now().date()
+
+    # Check if the user has already tried today (by IP or cookie)
+    for key, value in user_attempts.items():
+        if (key == user_ip or key == user_id) and value == today:
+            return True
+
+    # Record the attempt (store both hashed IP and hashed cookie)
+    if user_ip:
+        user_attempts[user_ip] = today
+    if user_id:
+        user_attempts[user_id] = today
+    return False
+
+def base64_to_image(base64_str):
+    if ";base64," in base64_str:
+        base64_str = base64_str.split(";base64,")[1].strip()
+    image_data = base64.b64decode(base64_str + '=' * (-len(base64_str) % 4))
+    image = Image.open(BytesIO(image_data)).convert('RGB')
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", quality=90)
+    buffer.seek(0)
+    return buffer.read()
+
+def search_image(base64_image, token_txt, request: gr.Request):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+        try:
             temp_file.write(base64_to_image(base64_image))
             file = temp_file.name
-            handle_file(file)
-    except Exception as e:
-        print(e)
-        gr.Info("Please upload an image file.")
-        return []
+            file1 = handle_file(file)
+        except Exception as e:
+            print(e)
+            gr.Info("Please upload an image file.")
+            return []
 
-    result_text = backend.predict(
-            file=handle_file(file),
-            token=token_txt, 
-            api_name="/search_face"
-    )
-    os.remove(file)
+        if token_txt == "" and if_limited(request):
+            gr.Info("⏳ Wait for your next free search, or 🚀 Go Premium Search at https://faceseek.online!", duration=10)
+            return []
 
-    result = json.loads(result_text)
-    outarray = []
-    if result['status'] > 300:
-        gr.Info(STATUS_MESSAGES[result['status']])
-        return '{"result": []}'
+        if token_txt == "KSB311":
+            token_txt = ""
 
+        result_text = backend.predict(
+                file=file1,
+                token=token_txt, 
+                api_name="/search_face"
+        )
+
+        result = json.loads(result_text)
+        outarray = []
+        if result['status'] > 300:
+            gr.Info(STATUS_MESSAGES[result['status']], duration=10)
+            return '{"result": []}'
     return result_text
 
 with gr.Blocks(css=CSS, head=HEAD_HTML, title="DeepSeek? FaceSeek!") as iface:
