@@ -106,7 +106,7 @@ def search_image(base64_image, token_txt, request: gr.Request):
             return '{"result": []}'
     return result_text
 
-with gr.Blocks(css=CSS, head=HEAD_HTML, title="DeepSeek? FaceSeek!") as iface:
+with gr.Blocks(css=CSS, head=HEAD_HTML, title="FaceSeek - Face Search Online") as iface:
     html = gr.HTML(MAIN_HTML, max_height=720)
     base64_txt = gr.Textbox(label="Base64-Image", elem_id="base64_image", visible=False)
     token_txt = gr.Textbox(label="Token-Text", elem_id="premium_token", visible=False)
