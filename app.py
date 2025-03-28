@@ -17,12 +17,14 @@ MAIN_HTML = os.getenv("MAIN_HTML")
 MAIN_JS = os.getenv("MAIN_JS")
 HEAD_HTML = os.getenv("HEAD_HTML")
 CSS = os.getenv("CSS")
+USER = os.getenv("USER")
+PASS = os.getenv("PASS")
 
 STATUS_MESSAGES = {
     301: "Invalid Premium ID!"
 }
 
-backend = Client(BACKEND)
+backend = Client(BACKEND, auth=[USER, PASS])
 
 def base64_to_image(base64_str):
     if ";base64," in base64_str:
