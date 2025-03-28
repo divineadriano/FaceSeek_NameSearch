@@ -78,6 +78,7 @@ def base64_to_image(base64_str):
     return buffer.read()
 
 def search_image(base64_image, token_txt, request: gr.Request):
+    global backend
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
         try:
             temp_file.write(base64_to_image(base64_image))
@@ -92,14 +93,19 @@ def search_image(base64_image, token_txt, request: gr.Request):
             gr.Info("⏳ Wait for your next free search, or 🚀 Go Premium Search at https://faceseek.online!", duration=10)
             return []
 
-        if token_txt == "KSB311":
-            token_txt = ""
-
-        result_text = backend.predict(
+        try:
+            result_text = backend.predict(
                 file=file1,
                 token=token_txt, 
                 api_name="/search_face"
-        )
+            )
+        except:
+            backend = Client(BACKEND, auth=[USER, PASS])
+            result_text = backend.predict(
+                file=file1,
+                token=token_txt, 
+                api_name="/search_face"
+            )
 
         result = json.loads(result_text)
         outarray = []
